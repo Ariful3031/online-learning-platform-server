@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -11,7 +12,7 @@ app.use(express.json())
 
 //alvhAtbPDFmGrY15
 
-const uri = "mongodb+srv://onlineLearningPlatform:alvhAtbPDFmGrY15@simple-crud-server.30cfyeq.mongodb.net/?appName=simple-crud-server";
+const uri = `mongodb+srv://${S3_BUCKET}:${SECRET_KEY}@simple-crud-server.30cfyeq.mongodb.net/?appName=simple-crud-server`;
 
 // mongodb client 
 const client = new MongoClient(uri, {
@@ -43,6 +44,17 @@ async function run() {
         const coursesCollection = db.collection('courses');
 
         // Courses api
+        app.get('/courses', async (req, res) => {
+            const cursor = coursesCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+        app.get('/courses/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: id }
+            const result = await coursesCollection.findOne(query);
+            res.send(result);
+        })
         app.post('/courses', async (req, res) => {
             const newCourse = req.body;
             const result = await coursesCollection.insertOne(newCourse);
@@ -53,21 +65,11 @@ async function run() {
             const id = req.params.id;
             const updatedCourse = req.body;
             const query = { _id: id }
-            const update = {
-                $set: {
-                    title_bangla: updatedCourse.title_bangla,
-                    title_english: updatedCourse.title_english,
-                    batch_number: updatedCourse.batch_number,
-                    batch_name: updatedCourse.batch_name,
-                    popularity: updatedCourse.popularity,
-                    deadline: updatedCourse.deadline,
-                    image: updatedCourse.image,
-                    location: updatedCourse.location,
-                    ratings: updatedCourse.ratings,
-                    starIcon: updatedCourse.starIcon,
-                    contact: updatedCourse.contact,
-                    price: updatedCourse.price,
-                    description: updatedCourse.description,
+
+            const update = { $set: {} };
+            for (const key in updatedCourse) {
+                if (updatedCourse[key] !== undefined) {
+                    update.$set[key] = updatedCourse[key];
                 }
             }
             const result = await coursesCollection.updateOne(query, update);
