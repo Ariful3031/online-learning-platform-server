@@ -10,9 +10,9 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json())
 
-//alvhAtbPDFmGrY15
 
-const uri = `mongodb+srv://${S3_BUCKET}:${SECRET_KEY}@simple-crud-server.30cfyeq.mongodb.net/?appName=simple-crud-server`;
+
+const uri = `mongodb+srv://${process.env.S3_BUCKET}:${process.env.SECRET_KEY}@simple-crud-server.30cfyeq.mongodb.net/?appName=simple-crud-server`;
 
 // mongodb client 
 const client = new MongoClient(uri, {
@@ -46,6 +46,12 @@ async function run() {
         // Courses api
         app.get('/courses', async (req, res) => {
             const cursor = coursesCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        app.get('/courses/population', async (req, res) => {
+            const cursor = coursesCollection.find().sort({ popularity: -1 }).limit(6);
             const result = await cursor.toArray();
             res.send(result);
         })
