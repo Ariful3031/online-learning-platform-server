@@ -38,8 +38,18 @@ async function run() {
         const enrolledCollection = db.collection('enrolled');
 
         //Enrolled related Api
+        app.get('/enrolled', async (req, res) => {
+            const email = req.query.email;
+            const query = {};
+            if (email) {
+                query.buyer_email = email
+            }
+            const cursor = enrolledCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
 
-         app.post('/enrolled', async (req, res) => {
+        app.post('/enrolled', async (req, res) => {
             const newEnrolled = req.body;
             const result = await enrolledCollection.insertOne(newEnrolled);
             res.send(result);
@@ -53,7 +63,7 @@ async function run() {
         })
         app.get('/courses/:id', async (req, res) => {
             const id = req.params.id;
-           const query = { _id: new ObjectId(id) }; 
+            const query = { _id: new ObjectId(id) };
             const result = await coursesCollection.findOne(query);
             res.send(result);
         })
