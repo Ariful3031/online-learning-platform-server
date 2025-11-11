@@ -10,8 +10,6 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json())
 
-
-
 const uri = `mongodb+srv://${process.env.S3_BUCKET}:${process.env.SECRET_KEY}@simple-crud-server.30cfyeq.mongodb.net/?appName=simple-crud-server`;
 
 // mongodb client 
@@ -22,11 +20,6 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
-
-
-
-
-
 
 app.get('/', (req, res) => {
     res.send('Smart server is running')
@@ -42,22 +35,25 @@ async function run() {
         //create a browse collection
         const db = client.db('learning_platform');
         const coursesCollection = db.collection('courses');
+        const enrolledCollection = db.collection('enrolled');
 
-        // Courses api
+        //Enrolled related Api
+
+         app.post('/enrolled', async (req, res) => {
+            const newEnrolled = req.body;
+            const result = await enrolledCollection.insertOne(newEnrolled);
+            res.send(result);
+        })
+
+        // Courses Related api
         app.get('/courses', async (req, res) => {
             const cursor = coursesCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         })
-
-        app.get('/courses/population', async (req, res) => {
-            const cursor = coursesCollection.find().sort({ popularity: -1 }).limit(6);
-            const result = await cursor.toArray();
-            res.send(result);
-        })
         app.get('/courses/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id: id }
+           const query = { _id: new ObjectId(id) }; 
             const result = await coursesCollection.findOne(query);
             res.send(result);
         })
