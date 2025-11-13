@@ -56,6 +56,18 @@ async function run() {
         })
 
         // Courses Related api
+
+          app.get('/courses', async (req, res) => {
+            const email = req.query.email;
+            const query = {};
+            if (email) {
+                query.email = email
+            }
+            const cursor = coursesCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
         app.get('/courses', async (req, res) => {
             const cursor = coursesCollection.find();
             const result = await cursor.toArray();
@@ -76,7 +88,7 @@ async function run() {
         app.patch('/courses/:id', async (req, res) => {
             const id = req.params.id;
             const updatedCourse = req.body;
-            const query = { _id: id }
+           const query = { _id: new ObjectId(id) };
 
             const update = { $set: {} };
             for (const key in updatedCourse) {
@@ -89,7 +101,7 @@ async function run() {
         })
         app.delete('/courses/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id: id }
+            const query = { _id: new ObjectId(id) }
             const result = await coursesCollection.deleteOne(query);
             res.send(result);
         })
