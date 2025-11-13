@@ -1,14 +1,24 @@
 const express = require('express');
 const cors = require('cors');
+// serviceKey 
+const admin = require("firebase-admin");
+const serviceAccount = require("./serviceKey.json");
+
+
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 3000;
-
-//MIddleware
-
 app.use(cors());
 app.use(express.json())
+
+
+
+// ServiceKey
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
 
 const uri = `mongodb+srv://${process.env.S3_BUCKET}:${process.env.SECRET_KEY}@simple-crud-server.30cfyeq.mongodb.net/?appName=simple-crud-server`;
 
@@ -26,8 +36,29 @@ app.get('/', (req, res) => {
 })
 
 // Function Run 
+const verifyIdToken = async (req, res, next) => {
+    const authorization = req.headers.authorization
 
+    if (!authorization) {
+        res.status(401).send({
+            message: "unauthorized access. token is no found!"
+        })
+    }
+    const token = authorization.split(' ')[1]
+
+
+    try {
+        await admin.auth().verifyIdToken(token)
+        next()
+    } catch (error) {
+        res.status(401).send({
+            message: "unauthorized access."
+        })
+    }
+
+}
 async function run() {
+
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
@@ -57,7 +88,7 @@ async function run() {
 
         // Courses Related api
 
-          app.get('/courses', async (req, res) => {
+        app.get('/courses', async (req, res) => {
             const email = req.query.email;
             const query = {};
             if (email) {
@@ -73,7 +104,7 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result);
         })
-        app.get('/courses/:id', async (req, res) => {
+        app.get('/courses/:id', verifyIdToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await coursesCollection.findOne(query);
@@ -88,7 +119,7 @@ async function run() {
         app.patch('/courses/:id', async (req, res) => {
             const id = req.params.id;
             const updatedCourse = req.body;
-           const query = { _id: new ObjectId(id) };
+            const query = { _id: new ObjectId(id) };
 
             const update = { $set: {} };
             for (const key in updatedCourse) {
@@ -105,6 +136,8 @@ async function run() {
             const result = await coursesCollection.deleteOne(query);
             res.send(result);
         })
+
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
